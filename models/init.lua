@@ -11,8 +11,10 @@
 --
 
 require 'nn'
-require 'cunn'
-require 'cudnn'
+-- if opt.nGPU > 1 then
+--    require 'cunn'
+--    require 'cudnn'
+-- end
 
 local M = {}
 
@@ -74,34 +76,12 @@ function M.setup(opt, checkpoint)
       model:add(linear:cuda())
    end
 
-   -- Set the CUDNN flags
-   if opt.cudnn == 'fastest' then
-      cudnn.fastest = true
-      cudnn.benchmark = true
-   elseif opt.cudnn == 'deterministic' then
-      -- Use a deterministic convolution implementation
-      model:apply(function(m)
+   -- Use a deterministic convolution implementation
+   model:apply(function(m)
          if m.setMode then m:setMode(1, 1, 1) end
-      end)
-   end
+   end)
 
-   -- Wrap the model with DataParallelTable, if using more than one GPU
-   if opt.nGPU > 1 then
-      local gpus = torch.range(1, opt.nGPU):totable()
-      local fastest, benchmark = cudnn.fastest, cudnn.benchmark
-
-      local dpt = nn.DataParallelTable(1, true, true)
-         :add(model, gpus)
-         :threads(function()
-            local cudnn = require 'cudnn'
-            cudnn.fastest, cudnn.benchmark = fastest, benchmark
-         end)
-      dpt.gradInput = nil
-
-      model = dpt:cuda()
-   end
-
-   local criterion = nn.CrossEntropyCriterion():cuda()
+   local criterion = nn.CrossEntropyCriterion()
    return model, criterion
 end
 

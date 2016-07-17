@@ -20,7 +20,6 @@ torch.setdefaulttensortype('torch.FloatTensor')
 
 local opt = opts.parse(arg)
 torch.manualSeed(opt.manualSeed)
-cutorch.manualSeedAll(opt.manualSeed)
 
 -- Load previous checkpoint, if it exists
 local checkpoint, optimState = checkpoints.latest(opt)
