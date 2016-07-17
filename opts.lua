@@ -12,10 +12,10 @@ function M.parse(arg)
    local cmd = torch.CmdLine()
    cmd:text()
    cmd:text('Torch-7 ResNet Training script')
+   cmd:text('See https://github.com/facebook/fb.resnet.torch/blob/master/TRAINING.md for examples')
    cmd:text()
    cmd:text('Options:')
     ------------ General options --------------------
-
    cmd:option('-data',       '',         'Path to dataset')
    cmd:option('-dataset',    'imagenet', 'Options: imagenet | cifar10')
    cmd:option('-manualSeed', 2,          'Manually set RNG seed')
@@ -31,13 +31,15 @@ function M.parse(arg)
    cmd:option('-batchSize',       32,      'mini-batch size (1 = pure stochastic)')
    cmd:option('-testOnly',        'false', 'Run on validation set only')
    cmd:option('-tenCrop',         'false', 'Ten-crop testing')
-   cmd:option('-resume',          'none',  'Path to directory containing checkpoint')
+   ------------- Checkpointing options ---------------
+   cmd:option('-save',            'checkpoints', 'Directory in which to save checkpoints')
+   cmd:option('-resume',          'none',        'Resume from the latest checkpoint in this directory')
    ---------- Optimization options ----------------------
    cmd:option('-LR',              0.1,   'initial learning rate')
    cmd:option('-momentum',        0.9,   'momentum')
    cmd:option('-weightDecay',     1e-4,  'weight decay')
    ---------- Model options ----------------------------------
-   cmd:option('-netType',      'resnet', 'Options: resnet')
+   cmd:option('-netType',      'resnet', 'Options: resnet | preresnet')
    cmd:option('-depth',        34,       'ResNet depth: 18 | 34 | 50 | 101 | ...', 'number')
    cmd:option('-shortcutType', '',       'Options: A | B | C')
    cmd:option('-retrain',      'none',   'Path to model to retrain with')
@@ -54,6 +56,10 @@ function M.parse(arg)
    opt.tenCrop = opt.tenCrop ~= 'false'
    opt.shareGradInput = opt.shareGradInput ~= 'false'
    opt.resetClassifier = opt.resetClassifier ~= 'false'
+
+   if not paths.dirp(opt.save) and not paths.mkdir(opt.save) then
+      cmd:error('error: unable to create checkpoint directory: ' .. opt.save .. '\n')
+   end
 
    if opt.dataset == 'imagenet' then
       -- Handle the most common case of missing -data flag

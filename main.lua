@@ -17,13 +17,13 @@ local opts = require 'opts'
 local checkpoints = require 'checkpoints'
 
 torch.setdefaulttensortype('torch.FloatTensor')
+torch.setnumthreads(1)
 
 local opt = opts.parse(arg)
 torch.manualSeed(opt.manualSeed)
 
 -- Load previous checkpoint, if it exists
 local checkpoint, optimState = checkpoints.latest(opt)
-local optimState = checkpoint and torch.load(checkpoint.optimFile) or nil
 
 -- Create model
 local model, criterion = models.setup(opt, checkpoint)
@@ -58,7 +58,7 @@ for epoch = startEpoch, opt.nEpochs do
       print(' * Best model ', testTop1, testTop5)
    end
 
-   checkpoints.save(epoch, model, trainer.optimState, bestModel)
+   checkpoints.save(epoch, model, trainer.optimState, bestModel, opt)
 end
 
 print(string.format(' * Finished top1: %6.3f  top5: %6.3f', bestTop1, bestTop5))
